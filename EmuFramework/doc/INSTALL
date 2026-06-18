@@ -1,0 +1,21 @@
+Please refer to imagine/doc/INSTALL to install the Imagine SDK before building EmuFramework and associated apps
+
+Building EmuFramework
+=====================
+
+EmuFramework is built as a static library with the same process as Imagine, see section 3 of imagine/doc/INSTALL
+
+Building Apps Using EmuFramework
+================================
+
+With EmuFramework installed into the Imagine SDK, use the makefiles in the app's directory to build a specific port. The final output goes into the build/[port name] directory. For example, to build the Android port with 24 compile jobs, use:
+
+make -f android.mk -j24
+
+This will invoke CMake to build a binary for each architecture (build/android-arm64, build/android-x86_64, etc.) and the combined app in build/android
+
+To build only specific architectures use the make variable android_arch with a space separated list of which architectures to build ("arm64 armv7 x86" for example)
+
+--------------------------------
+
+Copyright 2014-2026 by Robert Broglia

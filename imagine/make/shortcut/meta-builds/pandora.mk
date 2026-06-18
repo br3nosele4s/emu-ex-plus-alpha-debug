@@ -1,0 +1,94 @@
+include $(IMAGINE_PATH)/make/config.mk
+-include $(projectPath)/config.mk
+include $(IMAGINE_PATH)/make/pnd-metadata.mk
+
+.PHONY: all
+all : pandora-pnd
+
+CONFIG ?= Release
+
+pandora_buildName := pandora
+ifeq ($(CONFIG), Debug)
+ pandora_buildName := $(pandora_buildName)-debug
+else ifeq ($(CONFIG), RelWithDebInfo)
+ pandora_buildName := $(pandora_buildName)-rdebug
+endif
+
+pandora_targetPath := build/$(pandora_buildName)
+pandora_targetPNDPath := $(pandora_targetPath)/$(pnd_metadata_pndName)
+pandora_icon := res/icons/iOS/icon-114.png
+pandora_pxml := $(pandora_targetPNDPath)/PXML.xml
+pandora_pnd := $(pandora_targetPath)/$(pnd_metadata_pndName).pnd
+pandora_installUser := robert
+pandora_installHost := pandora
+pandora_sdcardPath := /media/mmcblk0p1/pandora
+pandora_deviceExecInstallPath := $(pandora_sdcardPath)/$(pnd_metadata_pndName)
+pandora_deviceExecPath := $(pandora_deviceExecInstallPath)/$(pnd_metadata_exec)
+pandora_devicePNDInstallPath := $(pandora_sdcardPath)/apps
+pandora_execPath := $(pandora_targetPNDPath)/$(pnd_metadata_exec)
+pandora_pndDeps = pandora-build
+pandora_cMakeCache := build/linux-armv7-pandora/CMakeCache.txt
+
+$(pandora_cMakeCache) : CMakeLists.txt
+	@echo "Configuring Build"
+	$(PRINT_CMD)cmake --preset linux-armv7-pandora --fresh
+
+.PHONY: pandora-build
+pandora-build : $(pandora_cMakeCache)
+	@echo "Building Executable"
+	$(PRINT_CMD)cmake --build build/linux-armv7-pandora --config=$(CONFIG) $(VERBOSE_ARG)
+
+.PHONY: pandora-exec-install
+pandora-exec-install : $(pandora_execPath)
+	ssh $(pandora_installUser)@$(pandora_installHost) mkdir -p $(pandora_deviceExecInstallPath)
+	scp $^ $(pandora_installUser)@$(pandora_installHost):$(pandora_deviceExecPath)
+
+$(pandora_pxml) : $(projectPath)/metadata/conf.mk $(metadata_confDeps)
+	bash $(IMAGINE_PATH)/tools/genPNDMeta.sh $(pnd_gen_metadata_args) $@
+.PHONY: pandora-metadata
+pandora-metadata : $(pandora_pxml)
+
+ifneq ($(wildcard $(pandora_icon)),)
+pandora_iconPNDPath := $(pandora_targetPNDPath)/icon.png
+$(pandora_iconPNDPath) :
+	@mkdir -p $(@D)
+	ln $(pandora_icon) $@
+endif
+
+ifneq ($(wildcard $(projectPath)/res/pandora),)
+pandora_resourcePath := res/pandora
+
+.PHONY: pandora-resources
+pandora-resources : $(pandora_resourcePath) $(pandora_iconPNDPath) $(pandora_pxml)
+	@mkdir -p $(pandora_targetPNDPath)
+	@echo linking resource files
+	cp -alLu $(pandora_resourcePath)/* $(pandora_targetPNDPath)/
+
+.PHONY: pandora-resources-install
+pandora-resources-install : $(pandora_pxml)
+	ssh $(pandora_installUser)@$(pandora_installHost) mkdir -p $(pandora_deviceExecInstallPath)
+	scp $(pandora_resourcePath)/* $(pandora_installUser)@$(pandora_installHost):$(pandora_deviceExecInstallPath)/
+	scp $(pandora_icon) $(pandora_installUser)@$(pandora_installHost):$(pandora_deviceExecInstallPath)/icon.png
+	scp $(pandora_pxml) $(pandora_installUser)@$(pandora_installHost):$(pandora_deviceExecInstallPath)/PXML.xml
+
+pandora_pndDeps += pandora-resources
+endif
+
+$(pandora_pnd) : $(pandora_pndDeps)
+	pnd_make.sh -c -d $(pandora_targetPNDPath) -i $(pandora_targetPNDPath)/icon.png -x $(pandora_pxml) -p $@
+.PHONY: pandora-pnd
+pandora-pnd : $(pandora_pnd)
+
+.PHONY: pandora-pnd-install
+pandora-pnd-install : $(pandora_pnd)
+	ssh $(pandora_installUser)@$(pandora_installHost) mkdir -p $(pandora_devicePNDInstallPath)
+	scp $^ $(pandora_installUser)@$(pandora_installHost):$(pandora_devicePNDInstallPath)/
+
+.PHONY: pandora-pnd-install-only
+pandora-pnd-install-only :
+	ssh $(pandora_installUser)@$(pandora_installHost) mkdir -p $(pandora_devicePNDInstallPath)
+	scp $(pandora_pnd) $(pandora_installUser)@$(pandora_installHost):$(pandora_devicePNDInstallPath)/
+
+.PHONY: pandora-ready
+pandora-ready : 
+	cp $(pandora_pnd) $(IMAGINE_PATH)/../releases-bin/pandora/$(pnd_metadata_pndName)-$(metadata_version).pnd

@@ -1,0 +1,3 @@
+coloca opções do debugger no options
+
+implementa o debugger no main

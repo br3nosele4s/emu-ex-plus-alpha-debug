@@ -1,0 +1,51 @@
+Building the Imagine SDK and applications is currently supported on Linux and MacOS X.
+
+1. Tools and Environment Setup
+==============================
+
+You need the following basic tools to start building Imagine including CMake, GNU Make, and pkgconfig. For platform-specific info, see the INSTALL-* file for that port.
+
+Linux: GCC 16/Clang 21 or newer and the mold linker (install from your distro's package manager)
+
+MacOS X: Xcode with a Clang 21 or newer toolchain, MacPorts versions of coreutils, libtool, pkgconfig and gnutar (http://www.macports.org)
+
+The following environment variables are used by the build system:
+
+IMAGINE_PATH : Required, no default
+ - The path to the root Imagine directory containing the "make/" subdirectory
+ - Example: IMAGINE_PATH=$HOME/projects/imagine
+
+IMAGINE_SDK_PATH : Optional, defaults to $(HOME)/imagine-sdk
+ - When building Imagine itself, the default install path of the Imagine SDK headers & libs
+ - Also used when building an Imagine-based app as the default Imagine SDK path
+
+V : Optional, defaults to undefined
+ - Set to V=1 to enable verbose build output for the makefile-based build system
+
+2. Dependencies
+===============
+
+For ports that need linking to additional static libraries (currently all except a stock Linux build), change to the "bundle/all" directory and run the specific bash script for the port to build the needed packages. All arguments passed to this script are passed to make directly. Extracted source & build output goes into "/tmp/imagine-bundle/$(pkgName)" but you can override the "tempDir" variable to change this. The "install" target installs the resulting files under "$(IMAGINE_SDK_PATH)" and is overridden via the "installDir" variable. Note that some packages need the GNU version of the tar utility for proper extraction. FLAC needs the Netwide Assembler (NASM) when building for X86.
+
+For example, to build and install the packages needed for the Android port:
+
+bash makeAll-android.sh install
+
+3. Building
+===========
+
+Use a CMake preset to configure and build a specific port. For example, to build and install the release version of the Linux port as symlinks:
+
+cmake --preset linux-x86_64
+CMAKE_INSTALL_MODE=REL_SYMLINK cmake --build --preset linux-x86_64-release --target install
+
+For Android, the bash script android.sh configures and builds all architectures at once and any required java files. The following command has the same effect as the previous example combined into one step:
+
+./android.sh installLinks
+
+By default, Imagine will install as a static library, headers, and a pkg-config file to the Imagine SDK directory, usually $HOME/imagine-sdk.
+
+--------------------------------
+
+Copyright 2014-2026 by Robert Broglia
+

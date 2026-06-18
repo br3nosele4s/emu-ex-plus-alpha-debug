@@ -1,0 +1,36 @@
+The following sections supplement the ones in the main INSTALL text for the Android port. A device running at least Android 2.3 is required to run Imagine.
+
+1. Tools and Environment Setup
+==============================
+
+Download & install Android Studio (stable channel). Define environment variables ANDROID_SDK_ROOT and/or ANDROID_HOME according to the Android Studio docs @ https://developer.android.com/studio/command-line/variables.html 
+
+If using MacOS X, install the gmake package from MacPorts and use it instead of the regular make command when building.
+
+The following environment variables are used by the build system:
+
+ANDROID_NDK_PATH : Optional, defaults to the highest version NDK found in ANDROID_SDK_ROOT
+ - The Android NDK root path containing the "toolchains" & "sources" subdirectories for use if different than the NDK installed in ANDROID_SDK_ROOT
+
+2. Dependencies
+===============
+
+Install the SDK platform for Android 16.0 (API 36), Android NDK Revision 29, and the Android Support Library from Android Studio's SDK tools menu
+
+The script bundle/android/toolchains/get-clang-prebuilt.sh can download an alternate version of Clang from android.googlesource.com, but this isn't needed with the current NDK.
+
+3. Building
+===========
+
+To sign the release APK with your key, set the following variables in ~/.gradle/gradle.properties and fill in the appropriate values:
+
+ANDROID_KEY_ALIAS=myKey
+ANDROID_KEY_PASSWORD=myPassword
+ANDROID_KEY_STORE=/home/user/myKey.keystore
+ANDROID_KEY_STORE_PASSWORD=myPassword
+
+When upgrading build tools like the NDK run the android-clean-project make target for each app to make sure project files (build.gradle, etc.) are re-created.
+
+--------------------------------
+
+Copyright 2014-2026 by Robert Broglia
