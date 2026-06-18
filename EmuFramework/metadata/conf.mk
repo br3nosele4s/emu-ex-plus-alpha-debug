@@ -15,3 +15,4 @@ pnd_metadata_website = http://www.explusalpha.com
 pnd_metadata_license = GPLv3+
 pnd_metadata_licenseURL = http://www.gnu.org/licenses/gpl.html
 pnd_metadata_sourceCodeURL = http://www.explusalpha.com/contents/emuex
+CFLAGS += -DDEBUGGER
